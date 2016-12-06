@@ -25,6 +25,8 @@ ADD_COMPONENT(CvGaussianBlur)
 
 ADD_COMPONENT(CvSolvePnP)
 
+ADD_COMPONENT(CvSolvePnPRansac)
+
 ADD_COMPONENT(Sequence)
 
 ADD_COMPONENT(CvSplit)
