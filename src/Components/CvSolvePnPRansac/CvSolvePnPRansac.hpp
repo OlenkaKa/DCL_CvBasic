@@ -75,6 +75,10 @@ protected:
     Base::DataStreamInPtr<Types::Objects3D::Object3D> in_object3d;
     Base::DataStreamIn<Types::CameraInfo> in_camera_info;
 
+    Base::DataStreamIn<cv::Mat> in_rvec;
+    Base::DataStreamIn<cv::Mat> in_tvec;
+    Base::DataStreamIn<Types::HomogMatrix> in_homog_matrix;
+
     // Output data streams
     Base::DataStreamOut<Types::HomogMatrix> out_homog_matrix;
     Base::DataStreamOut<cv::Mat> out_rvec;
@@ -83,6 +87,7 @@ protected:
     // Handlers
 
     // Properties
+    Base::Property<bool> useExtrinsicGuess;
     Base::Property<int> iterationsCount;
     Base::Property<float> reprojectionError;
     Base::Property<double> confidence;
