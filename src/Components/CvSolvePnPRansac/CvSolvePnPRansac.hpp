@@ -83,13 +83,13 @@ protected:
     Base::DataStreamOut<Types::HomogMatrix> out_homog_matrix;
     Base::DataStreamOut<cv::Mat> out_rvec;
     Base::DataStreamOut<cv::Mat> out_tvec;
+    Base::DataStreamOut<std::vector<int> > out_inliers;
 
     // Handlers
 
     // Properties
-    Base::Property<bool> useExtrinsicGuess;
-    Base::Property<int> iterationsCount;
-    Base::Property<float> reprojectionError;
+    Base::Property<int> iterations_count;
+    Base::Property<float> reprojection_error;
     Base::Property<double> confidence;
 
     // Handlers

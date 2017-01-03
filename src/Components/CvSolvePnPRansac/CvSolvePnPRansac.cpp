@@ -24,14 +24,12 @@ namespace CvSolvePnPRansac {
 
 CvSolvePnPRansac::CvSolvePnPRansac(const std::string & name):
         Base::Component(name),
-        useExtrinsicGuess("useExtrinsicGuess", false),
-		iterationsCount("iterationsCount", 100),
-		reprojectionError("reprojectionError", 8.0),
+		iterations_count("iterationsCount", 100),
+		reprojection_error("reprojectionError", 8.0),
 		confidence("confidence", 100) {
 //		flag("flag", "ITERATIVE", std::string("flag")) {
-    registerProperty(useExtrinsicGuess);
-	registerProperty(iterationsCount);
-	registerProperty(reprojectionError);
+	registerProperty(iterations_count);
+	registerProperty(reprojection_error);
 	registerProperty(confidence);
 //	registerProperty(flag);
 }
@@ -50,6 +48,7 @@ void CvSolvePnPRansac::prepareInterface() {
 	registerStream("out_homog_matrix", &out_homog_matrix);
 	registerStream("out_rvec", &out_rvec);
 	registerStream("out_tvec", &out_tvec);
+    registerStream("out_inliers", &out_inliers);
 
 	// Register handlers
 	registerHandler("onNewObject3D", boost::bind(&CvSolvePnPRansac::onNewObject3D, this));
@@ -86,6 +85,7 @@ void CvSolvePnPRansac::onNewObject3D() {
     Mat_<double> rotation_matrix;
 
     vector<int> inliers;
+    bool use_extrinsic_guess = true;
 
     if (!in_rvec.empty() && !in_tvec.empty()) {
         rvec = in_rvec.read();
@@ -102,10 +102,12 @@ void CvSolvePnPRansac::onNewObject3D() {
             tvec(i, 0) = homog_matrix(i, 3);
         }
         Rodrigues(temp_rotation_matrix, rvec);
+    } else {
+        use_extrinsic_guess = false;
     }
 
-    solvePnPRansac(modelPoints, imagePoints, camera_info.cameraMatrix(), camera_info.distCoeffs(), rvec, tvec, useExtrinsicGuess,
-				   iterationsCount, reprojectionError, confidence, inliers);
+    solvePnPRansac(modelPoints, imagePoints, camera_info.cameraMatrix(), camera_info.distCoeffs(), rvec, tvec, use_extrinsic_guess,
+				   iterations_count, reprojection_error, confidence, inliers);
     Rodrigues(rvec, rotation_matrix);
 
     CLOG(LERROR) << "**** Inliers number: " << inliers.size();
@@ -123,6 +125,7 @@ void CvSolvePnPRansac::onNewObject3D() {
     out_rvec.write(rvec.clone());
     out_tvec.write(tvec.clone());
     out_homog_matrix.write(Types::HomogMatrix(pattern_pose.clone()));
+    out_inliers.write(inliers);
 }
 
 
