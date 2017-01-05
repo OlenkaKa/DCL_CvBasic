@@ -85,16 +85,26 @@ protected:
     Base::DataStreamOut<cv::Mat> out_tvec;
     Base::DataStreamOut<std::vector<int> > out_inliers;
 
+    Base::DataStreamOut<std::vector<Types::HomogMatrix> > out_hypotheses_homog_matrix;
+    Base::DataStreamOut<std::vector<int> > out_hypotheses_inliers_num;
+
     // Handlers
 
     // Properties
     Base::Property<int> iterations_count;
     Base::Property<float> reprojection_error;
     Base::Property<double> confidence;
+    Base::Property<bool> create_hypothesis;
+    Base::Property<int> min_inliers_for_hypothesis;
 
     // Handlers
     void onNewObject3D();
 
+    void createSingleHypothesis(const boost::shared_ptr<Types::Objects3D::Object3D> &object3D,
+                                const Types::CameraInfo &camera_info);
+
+    void createMultipleHypotheses(const boost::shared_ptr<Types::Objects3D::Object3D> &object3D,
+                                  const Types::CameraInfo &camera_info);
 };
 
 } //: namespace CvSolvePnPRansac
