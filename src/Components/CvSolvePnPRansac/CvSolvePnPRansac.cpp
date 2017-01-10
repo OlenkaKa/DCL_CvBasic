@@ -27,7 +27,7 @@ CvSolvePnPRansac::CvSolvePnPRansac(const std::string & name):
 		iterations_count("iterationsCount", 100),
 		reprojection_error("reprojectionError", 8.0),
 		confidence("confidence", 100),
-        create_hypothesis("create_hypothesis", false),
+        create_hypothesis("create_hypotheses", false),
         min_inliers_for_hypothesis("min_inliers_for_hypothesis", 15) {
 //		flag("flag", "ITERATIVE", std::string("flag")) {
 	registerProperty(iterations_count);
@@ -154,14 +154,19 @@ void CvSolvePnPRansac::createMultipleHypotheses(const boost::shared_ptr<Types::O
     Mat_<double> rotation_matrix;
 
     vector<int> inliers(imagePoints.size());
+    inliers.clear();
 
     vector<Types::HomogMatrix> result_hypotheses;
     vector<int> result_inliers_num;
 
+    int iter = 0;
+    int max_iter = 10;
     do {
+        ++iter;
+
         for (size_t i = 0, size = inliers.size(); i < size; ++i) {
-            modelPoints.erase(modelPoints.begin() + i);
-            imagePoints.erase(imagePoints.begin() + i);
+            modelPoints.erase(modelPoints.begin() + inliers[i]);
+            imagePoints.erase(imagePoints.begin() + inliers[i]);
         }
         rvec.release();
         tvec.release();
@@ -172,8 +177,6 @@ void CvSolvePnPRansac::createMultipleHypotheses(const boost::shared_ptr<Types::O
                        iterations_count, reprojection_error, confidence, inliers);
         Rodrigues(rvec, rotation_matrix);
 
-        CLOG(LERROR) << "**** Inliers number: " << inliers.size();
-        CLOG(LINFO) << "rvec = " << rvec << "  tvec = " << tvec;
 
         // Create homogenous matrix.
         cv::Mat pattern_pose = (cv::Mat_<double>(4, 4) <<
@@ -182,11 +185,18 @@ void CvSolvePnPRansac::createMultipleHypotheses(const boost::shared_ptr<Types::O
                 rotation_matrix(2, 0), rotation_matrix(2, 1), rotation_matrix(2, 2), tvec(2),
                 0, 0, 0, 1);
 
-        CLOG(LINFO) << "pattern_pose:\n" << pattern_pose;
 
-        result_hypotheses.push_back(Types::HomogMatrix(pattern_pose.clone()));
-        result_inliers_num.push_back(inliers.size());
-    } while (inliers.size() >= min_inliers_for_hypothesis);
+        if (inliers.size() >= min_inliers_for_hypothesis) {
+            result_hypotheses.push_back(Types::HomogMatrix(pattern_pose.clone()));
+            result_inliers_num.push_back(inliers.size());
+
+            CLOG(LERROR) << "---> " << iter << " Inliers number: " << inliers.size();
+            CLOG(LINFO) << "rvec = " << rvec << "  tvec = " << tvec;
+            CLOG(LINFO) << "pattern_pose:\n" << pattern_pose;
+        } else {
+            inliers.clear();
+        }
+    } while (iter < max_iter);
 
     out_hypotheses_homog_matrix.write(result_hypotheses);
     out_hypotheses_inliers_num.write(result_inliers_num);
